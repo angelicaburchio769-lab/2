@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>松阳非遗文化知识图谱</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            gap: 0;
+            flex-direction: row;
+        }
+        
+        @media (min-width: 1024px) {
+            .container {
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .chart-container {
+                flex: 2;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            }
+            
+            .sidebar {
+                flex: 1;
+                border-radius: 12px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            }
+        }
+        
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .container {
+                gap: 10px;
+                padding: 10px;
+            }
+            
+            .chart-container {
+                flex: 1.5;
+                border-radius: 8px;
+                box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            }
+            
+            .sidebar {
+                flex: 1;
+                border-radius: 8px;
+                box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            }
+        }
+        
+        @media (max-width: 767px) {
+            .container {
+                flex-direction: column;
+                padding: 0;
+                gap: 0;
+            }
+            
+            .chart-container {
+                flex: 1;
+                min-height: 45%;
+                border-radius: 0;
+            }
+            
+            .sidebar {
+                flex: 1;
+                min-height: 55%;
+                border-radius: 0;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+        
+        .chart-container {
+            background: white;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #chart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .sidebar {
+            background: white;
+            padding: 15px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        @media (max-width: 767px) {
+            .sidebar {
+                padding: 12px;
+            }
+        }
+        
+        .card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .card-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 767px) {
+            .card-title {
+                font-size: 13px;
+            }
+        }
+        
+        .card-content {
+            font-size: 12px;
+            color: #555;
+            line-height: 1.5;
+        }
+        
+        .sub-nodes {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .sub-nodes strong {
+            font-size: 12px;
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .sub-node-item {
+            background: white;
+            padding: 8px;
+            margin-bottom: 6px;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            word-break: break-word;
+        }
+        
+        .sub-node-item:active {
+            background: #667eea;
+            color: white;
+            transform: scale(0.98);
+        }
+        
+        .sub-node-item:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(3px);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px 15px;
+            color: #999;
+        }
+        
+        .empty-state div {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 767px) {
+            .empty-state {
+                padding: 20px 10px;
+            }
+            
+            .empty-state div {
+                font-size: 28px;
+            }
+        }
+        
+        .legend {
+            font-size: 11px;
+            color: #666;
+            padding: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+        
+        .legend-item {
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 4px;
+        }
+        
+        .legend-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        .details {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .detail-text {
+            font-size: 12px;
+            color: #555;
+            line-height: 1.6;
+            text-align: justify;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        .back-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .back-btn:hover {
+            background: #764ba2;
+            transform: translateX(-3px);
+        }
+
+        .back-btn:active {
+            transform: scale(0.98);
+        }
+
+        .back-btn.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chart-container">
+            <div id="chart"></div>
+        </div>
+        <div class="sidebar">
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #667eea;"></span>
+                    <span>一级节点</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #764ba2;"></span>
+                    <span>二级节点</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #f97316;"></span>
+                    <span>三级节点</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot" style="background: #10b981;"></span>
+                    <span>四级节点</span>
+                </div>
+            </div>
+            <button id="back-btn" class="back-btn hidden" onclick="goBack()">← 返回上一级</button>
+            <div id="info-panel">
+                <div class="empty-state">
+                    <div>👆</div>
+                    <p>点击图谱中的节点查看详情</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const knowledgeData = {
+            "松阳茶叶": {
+                description: "松阳茶叶文化涵盖千年种茶历史、多样茶类划分、传统农耕茶俗及非遗炒茶工艺，是松阳非遗文化的重要组成部分。",
+                subNodes: {
+                    "茶文化历史根基": {
+                        description: "松阳种茶历史悠久，与县域发展同步，形成丰富的本土茶文化和民俗茶饮传统。",
+                        details: "松阳种茶史与县域发展同步，积淀深厚的本土茶文化。端午药茶是特色民俗茶饮，农历五月采山间草药与茶叶合制，全年饮用，代代传承民俗制茶习俗。",
+                        children: {
+                            "千年种茶文脉": "种茶史与松阳县域发展同步，积淀本土茶文化",
+                            "民俗茶饮非遗": "端午药茶，农历五月采山间草药与茶叶合制，全年饮用，代代传承民俗制茶习俗"
+                        }
+                    },
+                    "茶类文化划分": {
+                        description: "松阳茶叶分为传统特色商品茶和民俗专属茶饮两大类，各有独特文化内涵。",
+                        details: "传统特色商品茶包括松阳银猴、香茶、黄金叶、黄金芽等本土培育的经典茶种；民俗专属茶饮以端午药茶为代表，是独有的乡土茶文化符号。",
+                        children: {
+                            "传统特色商品茶": "松阳银猴、香茶、黄金叶、黄金芽（本土培育经典茶种）",
+                            "民俗专属茶饮": "端午药茶（独有的乡土茶文化符号）"
+                        }
+                    },
+                    "传统农耕茶俗": {
+                        description: "农户世代以种茶为本，形成独特的乡土经营人文和传统劳作习俗。",
+                        details: "农户世代以种茶为本，搭配竹编非遗副业，形成'茶+竹编'双非遗乡村文化生态。保留小农家庭式传统采茶人文场景，采茶旺季季节性用工形成乡村特色茶事节庆氛围。",
+                        children: {
+                            "乡土经营人文": "农户世代以种茶为本，搭配竹编非遗副业，形成'茶+竹编'双非遗乡村文化生态",
+                            "传统劳作习俗": {
+                                description: "包括家庭自主采茶和采茶旺季季节性用工。",
+                                details: "家庭自主采茶保留小农家庭式传统采茶人文场景；采茶旺季季节性用工形成乡村特色茶事节庆氛围。",
+                                children: {
+                                    "家庭自主采茶": "保留小农家庭式传统采茶人文场景",
+                                    "采茶旺季季节性用工": "形成乡村特色茶事节庆氛围"
+                                }
+                            }
+                        }
+                    },
+                    "非遗炒茶工艺文化": {
+                        description: "村内炒茶商户代代延续本土手工炒茶技艺，不同茶叶品类对应专属古法炒制工序。",
+                        details: "村内炒茶商户代代延续本土手工炒茶技艺。不同茶叶品类对应专属古法炒制工序，留存工艺实拍图解等文化资料。规模化工厂结合传统工艺做文创茶品包装，传播茶文化。",
+                        children: {
+                            "手工传承主体": "村内炒茶商户，代代延续本土手工炒茶技艺",
+                            "差异化传统炒制技艺": "不同茶叶品类对应专属古法炒制工序，留存工艺实拍图解等文化资料",
+                            "标准化文创加工": "规模化工厂结合传统工艺做文创茶品包装，传播茶文化"
+                        }
+                    },
+                    "本土茶文化品牌传播": {
+                        description: "以'峰露源'为核心本土文化标识品牌，通过线下门店和线上电商传播松阳茶文化。",
+                        details: "峰露源承载松阳千年茶民俗、制茶技艺文化形象。线下门店设置茶文化展示空间，零售茶叶同时科普本土茶俗；线上电商售卖茶、茶文创，对外输出松阳茶文化。",
+                        children: {
+                            "本土文化标识品牌": "峰露源，承载松阳千年茶民俗、制茶技艺文化形象",
+                            "文化传播渠道": {
+                                description: "通过线下门店和线上电商两大渠道传播松阳茶文化。",
+                                details: "线下门店设置茶文化展示空间，零售茶叶同时科普本土茶俗；线上电商售卖茶、茶文创，线上对外输出松阳茶文化。",
+                                children: {
+                                    "线下门店": "设置茶文化展示空间，零售茶叶同时科普本土茶俗",
+                                    "线上电商": "售卖茶、茶文创，线上对外输出松阳茶文化"
+                                }
+                            }
+                        }
+                    },
+                    "茶文化发展现存阻碍": {
+                        description: "松阳茶文化发展面临文化体验配套不足、用地政策约束、闲置文旅载体和市场环境限制等问题。",
+                        details: "茶园品茶、避暑休闲空间稀少，难以承载游客沉浸式茶文化体验。农业用地限制，无法新建茶馆、茶民宿、茶文化咖啡馆等体验载体。大型酒店长期空置，缺少茶文化运营场所。文旅行业低迷，茶文旅融合文化项目落地难度大。",
+                        children: {
+                            "文化体验配套不足": "茶园品茶、避暑休闲空间稀少，难以承载游客沉浸式茶文化体验",
+                            "用地政策约束": "农业用地限制，无法新建茶馆、茶民宿、茶文化咖啡馆等体验载体",
+                            "闲置文旅载体": "大型酒店长期空置，缺少茶文化运营场所",
+                            "市场环境限制": "文旅行业低迷，茶文旅融合文化项目落地难度大"
+                        }
+                    },
+                    "茶文化融合发展规划": {
+                        description: "借鉴大木山案例，整合整片茶园打造一体化茶文化体验基地。",
+                        details: "借鉴大木山连片茶园文旅模式，整合整片茶园打造一体化茶文化体验基地。完善茶文化空间，新增茶园休憩茶室、避暑品茶区域；开展非遗体验项目，包括茶园观光、手工采茶、古法炒茶参观体验；发展多元茶文创业态，如茶味特色食品、茶文化主题民宿，全域植入松阳茶民俗元素。",
+                        children: {
+                            "对标案例": "借鉴大木山连片茶园文旅模式，整合整片茶园打造一体化茶文化体验基地",
+                            "茶旅文化融合方向": {
+                                description: "完善茶文化空间、开展非遗体验项目、发展多元茶文创业态。",
+                                details: "完善茶文化空间，新增茶园休憩茶室、避暑品茶区域；开展非遗体验项目，包括茶园观光、手工采茶、古法炒茶参观体验；发展多元茶文创业态，如茶味特色食品、茶文化主题民宿，全域植入松阳茶民俗元素。",
+                                children: {
+                                    "完善茶文化空间": "新增茶园休憩茶室、避暑品茶区域",
+                                    "非遗体验项目": "茶园观光、手工采茶、古法炒茶参观体验",
+                                    "多元茶文创业态": "茶味特色食品、茶文化主题民宿，全域植入松阳茶民俗元素"
+                                }
+                            },
+                            "文化品牌推广": "依托'峰露源'拓宽线上线下渠道，对外传播松阳本土千年茶文化"
+                        }
+                    }
+                }
+            },
+            "太平体系": {
+                description: "太平体系包括大岭根太平船灯、太平龙灯、双狮展演和新兴本土山歌，是松阳重要的非遗民俗文化。",
+                subNodes: {
+                    "大岭根太平船灯": {
+                        description: "核心非遗文化，船内置花灯灯火祥和，取平安吉祥之意，已有百年历史。",
+                        details: "大岭根太平船灯是松阳核心非遗文化。船内置花灯灯火祥和，取平安吉祥之意。古时村民春节自娱祈福活动，已有百年历史。当代演变使用不锈钢支架、成品装饰，仅纸鱼保留手工制作。1989年参加县级展演斩获银奖。",
+                        children: {
+                            "起源由来": {
+                                description: "名称寓意平安吉祥，诞生初衷为村民春节自娱祈福活动。",
+                                details: "船内置花灯灯火祥和，取平安吉祥之意。古时村民春节自娱祈福活动，已有百年历史。",
+                                children: {
+                                    "名称寓意": "船内置花灯灯火祥和，取平安吉祥之意",
+                                    "诞生初衷": "古时村民春节自娱祈福活动，已有百年历史"
+                                }
+                            },
+                            "发展沿革": {
+                                description: "当代演变使用不锈钢支架、成品装饰，1989年参加县级展演斩获银奖。",
+                                details: "当代演变使用不锈钢支架、成品装饰，仅纸鱼保留手工制作。1989年参加县级展演斩获银奖。",
+                                children: {
+                                    "当代演变": "不锈钢支架、成品装饰，仅纸鱼保留手工制作",
+                                    "荣誉历程": "1989年参加县级展演斩获银奖"
+                                }
+                            },
+                            "传承现状困境": {
+                                description: "传承模式为父子口传身教，年轻人学习意愿低，存在失传风险。",
+                                details: "传承模式为父子口传身教，仅靠耳濡目染学习。年轻人学习意愿低，传承人普遍高龄，存在失传风险。",
+                                children: {
+                                    "传承模式": "父子口传身教，仅靠耳濡目染学习",
+                                    "现存难题": "年轻人学习意愿低，传承人普遍高龄，存在失传风险"
+                                }
+                            },
+                            "完整表演体系": {
+                                description: "包含人员配置、唱腔山歌、伴奏锣鼓和巡游舞步四大组成部分。",
+                                details: "人员配置包括核心2人和配套二十余人。唱腔山歌全程使用松阳本土土话演唱，内容为正月祈福吉祥祝辞，现存民国手抄老歌谱未系统性整理挖掘。伴奏锣鼓使用铜锣、鼓、唢呐等传统民间打击管弦乐器，把控巡游行进节奏。",
+                                children: {
+                                    "人员配置": {
+                                        description: "核心2人和配套二十余人组成表演队伍。",
+                                        details: "核心2人包括船内扮'小媳妇'（矮小男性托举船架）、船外船夫掌控行进方向；配套二十余人包括弹唱伴奏、巡游仪仗队伍。",
+                                        children: {
+                                            "核心2人": "船内扮'小媳妇'（矮小男性托举船架）、船外船夫掌控行进方向",
+                                            "配套二十余人": "弹唱伴奏、巡游仪仗队伍"
+                                        }
+                                    },
+                                    "唱腔山歌": {
+                                        description: "全程使用松阳本土土话演唱，内容为正月祈福吉祥祝辞。",
+                                        details: "全程使用松阳本土土话演唱，内容为正月祈福吉祥祝辞，承载底层百姓生活愿景。现存民国手抄老歌谱，未系统性整理挖掘。",
+                                        children: {
+                                            "语言": "全程使用松阳本土土话演唱",
+                                            "内容": "正月祈福吉祥祝辞，承载底层百姓生活愿景",
+                                            "现存资料": "民国手抄老歌谱，未系统性整理挖掘"
+                                        }
+                                    },
+                                    "伴奏锣鼓": {
+                                        description: "使用传统民间打击管弦乐器，把控巡游行进节奏。",
+                                        details: "乐器配置包括铜锣、鼓、唢呐等传统民间打击管弦乐器。作用是把控巡游行进节奏，烘托节庆热闹氛围。",
+                                        children: {
+                                            "乐器配置": "铜锣、鼓、唢呐传统民间打击管弦乐器",
+                                            "作用": "把控巡游行进节奏，烘托节庆热闹氛围"
+                                        }
+                                    },
+                                    "巡游舞步": {
+                                        description: "船夫持桨模拟行船摇橹步伐，船内表演者随船身晃动小幅扭动。",
+                                        details: "船夫持桨模拟行船摇橹步伐，随鼓点起伏摇摆；船内表演者随船身晃动小幅扭动，贴合山歌韵律。",
+                                        children: {
+                                            "船夫": "持桨模拟行船摇橹步伐，随鼓点起伏摇摆",
+                                            "船内表演者": "随船身晃动小幅扭动，贴合山歌韵律"
+                                        }
+                                    }
+                                }
+                            },
+                            "道具制作工艺": {
+                                description: "老式使用原木竹篾、土布、手工彩纸，新式使用不锈钢管材、工业装饰布料。",
+                                details: "老式材料为原木竹篾、土布、手工彩纸；新式材料为不锈钢管材、工业装饰布料，核心纸鱼纯手工制作。制作工序为搭建船架→裱糊装饰→手工扎制纸鱼→装配花灯油灯。",
+                                children: {
+                                    "原料材质": {
+                                        description: "老式使用天然材料，新式使用现代工业材料。",
+                                        details: "老式使用原木竹篾、土布、手工彩纸；新式使用不锈钢管材、工业装饰布料，核心纸鱼纯手工制作。",
+                                        children: {
+                                            "老式": "原木竹篾、土布、手工彩纸",
+                                            "新式": "不锈钢管材、工业装饰布料，核心纸鱼纯手工"
+                                        }
+                                    },
+                                    "制作工序": "搭建船架→裱糊装饰→手工扎制纸鱼→装配花灯油灯"
+                                }
+                            },
+                            "展演时空": {
+                                description: "每年正月初四至十五在村内及周边村落巡回展演。",
+                                details: "时间为每年正月初四至十五，十五为表演高峰期。路线为村内近村先演、远村延后，巡回周边村落巡游。场地以叶氏宗祠戏台为固定展演核心场地。",
+                                children: {
+                                    "时间": "每年正月初四至十五，十五为表演高峰期",
+                                    "路线": "村内近村先演、远村延后，巡回周边村落巡游",
+                                    "场地": "叶氏宗祠戏台为固定展演核心场地"
+                                }
+                            }
+                        }
+                    },
+                    "大岭根太平龙灯": {
+                        description: "村里新春核心民俗，以竹、木板手工扎制分段龙身，内置灯火，正月初四、元宵沿街巡游。",
+                        details: "大岭根太平龙灯是村里新春核心民俗，以竹、木板手工扎制分段龙身，内置灯火，正月初四、元宵沿街巡游，承载村民祈求村落平安、风调雨顺的祈福心愿，代代传承扎灯、舞灯整套乡土手工与表演文化。",
+                        children: {}
+                    },
+                    "双狮展演": {
+                        description: "松阳乡村节庆经典瑞兽民俗，两只彩狮配合锣鼓乐完成拜门、嬉戏等成套动作。",
+                        details: "双狮展演是松阳乡村节庆经典瑞兽民俗，两只彩狮配合锣鼓乐完成拜门、嬉戏等成套动作，常在龙灯巡游时同台演出，以双狮戏珠的表演寓意吉祥兴旺，烘托乡村节日热闹氛围，是本地群众喜闻乐见的传统舞蹈形式。",
+                        children: {}
+                    },
+                    "新兴本土山歌": {
+                        description: "依托松阳方言传唱的乡土口头文化，曲调贴合本地语言声调。",
+                        details: "新兴本土山歌依托松阳方言传唱的乡土口头文化，曲调贴合本地语言声调，歌词记录采茶劳作、乡间日常、邻里情思，节庆龙狮表演时常搭配山歌演唱，是当地村民抒发生活情感、维系乡土认同的民间音乐载体。",
+                        children: {}
+                    }
+                }
+            },
+            "松阳竹编": {
+                description: "松阳竹编是当地传统手工技艺之一，具有鲜明的地域文化特色，是乡村非遗文化的重要组成部分。",
+                subNodes: {
+                    "文化定位": {
+                        description: "松阳竹编是当地传统手工技艺之一，与当地竹资源和乡村生活方式紧密相关。",
+                        details: "松阳竹编是当地传统手工技艺之一，具有鲜明的地域文化特色，是乡村非遗文化的重要组成部分。主要分布于大岭根村等地区，与当地竹资源和乡村生活方式紧密相关。村民利用当地丰富竹资源开展竹编制作，将生产生活智慧融入传统技艺之中。",
+                        children: {
+                            "非遗项目背景": "松阳竹编是当地传统手工技艺之一，具有鲜明的地域文化特色，是乡村非遗文化的重要组成部分",
+                            "传承区域": "主要分布于大岭根村等地区，与当地竹资源和乡村生活方式紧密相关",
+                            "乡村生活联系": "村民利用当地丰富竹资源开展竹编制作，将生产生活智慧融入传统技艺之中"
+                        }
+                    },
+                    "历史发展": {
+                        description: "传统时期主要满足村民日常生产生活需求，现代面临传承压力并向文创转型。",
+                        details: "传统时期主要满足村民日常生产生活需求，产品类型为传统竹篮、竹筐等生活用品。随着现代生活方式变化，传统竹制生活用品需求减少，竹编技艺面临传承压力。结合现代市场需求，将传统竹编技艺转化为具有观赏性、文化性和实用性的文创产品。",
+                        children: {
+                            "传统时期": {
+                                description: "主要满足村民日常生产生活需求。",
+                                details: "传统时期主要满足村民日常生产生活需求，产品类型为传统竹篮、竹筐等生活用品。",
+                                children: {
+                                    "制作目的": "主要满足村民日常生产生活需求",
+                                    "产品类型": "传统竹篮、竹筐等生活用品"
+                                }
+                            },
+                            "发展变化": "随着现代生活方式变化，传统竹制生活用品需求减少，竹编技艺面临传承压力",
+                            "创新转型": "结合现代市场需求，将传统竹编技艺转化为具有观赏性、文化性和实用性的文创产品"
+                        }
+                    },
+                    "制作材料": {
+                        description: "传统竹编主要采用当地毛竹作为制作原材料。",
+                        details: "传统竹编主要采用当地毛竹作为制作原材料。通过选竹、剖竹、加工等步骤，使竹材达到编织要求。部分现代竹编产品根据需求采用环保材料进行制作。",
+                        children: {
+                            "天然毛竹": "传统竹编主要采用当地毛竹作为制作原材料",
+                            "竹材处理": "通过选竹、剖竹、加工等步骤，使竹材达到编织要求",
+                            "环保替代材料": "部分现代竹编产品根据需求采用环保材料进行制作"
+                        }
+                    },
+                    "传统制作工艺": {
+                        description: "包括选材、加工处理、编织技法和成品制作四大环节。",
+                        details: "选材是根据竹材品质选择适合制作竹编产品的材料。加工处理是对竹材进行劈、削、刮等处理，形成适合编织的竹篾。编织技法运用传统经纬交错编织方式，形成不同造型和纹理。成品制作是根据设计需求完成竹编产品制作。",
+                        children: {
+                            "选材": "根据竹材品质选择适合制作竹编产品的材料",
+                            "加工处理": "对竹材进行劈、削、刮等处理，形成适合编织的竹篾",
+                            "编织技法": "运用传统经纬交错编织方式，形成不同造型和纹理",
+                            "成品制作": "根据设计需求完成竹编产品制作"
+                        }
+                    },
+                    "文化价值": {
+                        description: "展现当地居民利用自然资源创造生活用品的传统智慧。",
+                        details: "乡村文化价值展现当地居民利用自然资源创造生活用品的传统智慧。非遗传承价值保留传统竹编技艺，延续乡村手工文化记忆。文旅融合价值使竹编体验可以作为乡村旅游和研学活动的重要文化内容。",
+                        children: {
+                            "乡村文化价值": "展现当地居民利用自然资源创造生活用品的传统智慧",
+                            "非遗传承价值": "保留传统竹编技艺，延续乡村手工文化记忆",
+                            "文旅融合价值": "竹编体验可以作为乡村旅游和研学活动的重要文化内容"
+                        }
+                    },
+                    "产业运营模式": {
+                        description: "以家庭制作、小规模生产为主要形式，形成订单、制作、销售相结合的发展模式。",
+                        details: "生产方式以家庭制作、小规模生产为主要形式。销售流程包括定制订单、村民制作和产品销售，形成订单、制作、销售相结合的发展模式。",
+                        children: {
+                            "生产方式": "以家庭制作、小规模生产为主要形式",
+                            "销售流程": {
+                                description: "包括定制订单、村民制作和产品销售三个环节。",
+                                details: "定制订单根据客户需求确定产品类型和制作内容；村民制作让村民参与竹编生产，形成乡村手工产业模式；产品销售通过统一销售渠道实现产品输出。",
+                                children: {
+                                    "定制订单": "根据客户需求确定产品类型和制作内容",
+                                    "村民制作": "村民参与竹编生产，形成乡村手工产业模式",
+                                    "产品销售": "通过统一销售渠道实现产品输出"
+                                }
+                            },
+                            "产业特点": "形成订单、制作、销售相结合的发展模式"
+                        }
+                    },
+                    "文化推广": {
+                        description: "通过线下体验、线上传播和文创开发三大渠道推广竹编文化。",
+                        details: "线下体验开展竹编研学、手工体验等活动，让游客参与传统技艺学习。线上传播利用网络平台展示竹编作品，传播非遗文化。文创开发将传统竹编与现代设计结合，开发具有文化特色的产品。",
+                        children: {
+                            "线下体验": "开展竹编研学、手工体验等活动，让游客参与传统技艺学习",
+                            "线上传播": "利用网络平台展示竹编作品，传播非遗文化",
+                            "文创开发": "将传统竹编与现代设计结合，开发具有文化特色的产品"
+                        }
+                    },
+                    "传承发展现状": {
+                        description: "主要由当地竹编艺人和村民承担技艺传承责任，面临年轻传承人员不足等问题。",
+                        details: "传承主体主要由当地竹编艺人和村民承担技艺传承责任。当前问题包括年轻传承人员不足、传统产品市场需求下降、技艺传承与产业发展需要进一步结合。发展方向是通过非遗体验、文创开发、乡村旅游融合等方式推动松阳竹编持续发展。",
+                        children: {
+                            "传承主体": "主要由当地竹编艺人和村民承担技艺传承责任",
+                            "当前问题": {
+                                description: "面临年轻传承人员不足、传统产品市场需求下降等问题。",
+                                details: "年轻传承人员不足，传统产品市场需求下降，技艺传承与产业发展需要进一步结合。",
+                                children: {
+                                    "年轻传承人员不足": "",
+                                    "传统产品市场需求下降": "",
+                                    "技艺传承与产业发展需要进一步结合": ""
+                                }
+                            },
+                            "发展方向": "通过非遗体验、文创开发、乡村旅游融合等方式推动松阳竹编持续发展"
+                        }
+                    }
+                }
+            },
+            "松阳古法造纸": {
+                description: "松阳古法造纸拥有悠久历史，是当地传统手工技艺的重要组成部分，承载着地方文化记忆。",
+                subNodes: {
+                    "文化历史": {
+                        description: "松阳古法造纸拥有悠久历史，体现传统劳动智慧，具有历史价值、文化价值和技艺价值。",
+                        details: "松阳古法造纸拥有悠久历史，是当地传统手工技艺的重要组成部分，承载着地方文化记忆。古法造纸体现传统劳动智慧，具有历史价值、文化价值和技艺价值。造纸技艺与当地生产生活、文化传播和民俗活动紧密相关。",
+                        children: {
+                            "千年造纸文脉": "松阳古法造纸拥有悠久历史，是当地传统手工技艺的重要组成部分，承载着地方文化记忆",
+                            "非遗文化价值": "古法造纸体现传统劳动智慧，具有历史价值、文化价值和技艺价值",
+                            "传统文化意义": "造纸技艺与当地生产生活、文化传播和民俗活动紧密相关"
+                        }
+                    },
+                    "文化展示载体": {
+                        description: "包括大岭根村造纸工坊、城区统捐局研学造纸工坊和非遗纸文化主题民宿。",
+                        details: "大岭根村造纸工坊通过传统造纸工坊展示古法造纸流程，让游客了解传统造纸技艺。城区统捐局研学造纸工坊结合研学活动，让参与者体验传统造纸制作过程。非遗纸文化主题民宿将古法造纸文化融入乡村旅游和住宿体验，拓展非遗展示空间。",
+                        children: {
+                            "大岭根村造纸工坊": "通过传统造纸工坊展示古法造纸流程，让游客了解传统造纸技艺",
+                            "城区统捐局研学造纸工坊": "结合研学活动，让参与者体验传统造纸制作过程",
+                            "非遗纸文化主题民宿": "将古法造纸文化融入乡村旅游和住宿体验，拓展非遗展示空间"
+                        }
+                    },
+                    "传承体系": {
+                        description: "松阳古法造纸技艺通过长期生产实践形成，并在当地持续传承。",
+                        details: "松阳古法造纸技艺通过长期生产实践形成，并在当地持续传承。传承方式包括师徒传承和家族传承，通过师傅带徒弟和家庭内部传承的方式传授造纸技艺。当地造纸艺人承担传统造纸技艺保护和传承责任。",
+                        children: {
+                            "历史传承": "松阳古法造纸技艺通过长期生产实践形成，并在当地持续传承",
+                            "传承方式": {
+                                description: "包括师徒传承和家族传承两种方式。",
+                                details: "师徒传承通过师傅带徒弟的方式传授造纸技艺；家族传承通过家庭内部传承方式延续传统制作方法。",
+                                children: {
+                                    "师徒传承": "通过师傅带徒弟的方式传授造纸技艺",
+                                    "家族传承": "通过家庭内部传承方式延续传统制作方法"
+                                }
+                            },
+                            "传承主体": "当地造纸艺人承担传统造纸技艺保护和传承责任"
+                        }
+                    },
+                    "古法造纸制作工艺": {
+                        description: "包括原料采集、制作流程和工艺特点三大方面。",
+                        details: "原料采集主要采用结香树皮作为制作原料（结香全身可用，树皮造纸、枝干烧火、花为中药），利用当地自然水源参与造纸生产过程。制作流程包括采料、处理原料、制浆、抄纸和晾晒加工五个环节。工艺特点是保留传统手工制作流程，体现人与自然结合的造纸智慧。",
+                        children: {
+                            "原料采集": {
+                                description: "主要采用结香树皮作为制作原料。",
+                                details: "传统造纸主要采用结香树皮作为制作原料（结香全身可用，树皮造纸、枝干烧火、花为中药），利用当地自然水源参与造纸生产过程。",
+                                children: {
+                                    "结香树皮": "传统造纸主要采用结香树皮作为制作原料（结香全身可用，树皮造纸、枝干烧火、花为中药）",
+                                    "水资源利用": "利用当地自然水源参与造纸生产过程"
+                                }
+                            },
+                            "制作流程": {
+                                description: "包括采料、处理原料、制浆、抄纸和晾晒加工五个环节。",
+                                details: "采料是采集适用于造纸的植物原料；处理原料是对树皮等原料进行加工处理；制浆是通过传统方法将原料加工成为纸浆；抄纸是利用传统工具完成纸张成型；晾晒加工是对纸张进行晾晒整理，形成最终产品。",
+                                children: {
+                                    "采料": "采集适用于造纸的植物原料",
+                                    "处理原料": "对树皮等原料进行加工处理",
+                                    "制浆": "通过传统方法将原料加工成为纸浆",
+                                    "抄纸": "利用传统工具完成纸张成型",
+                                    "晾晒加工": "对纸张进行晾晒整理，形成最终产品"
+                                }
+                            },
+                            "工艺特点": "保留传统手工制作流程，体现人与自然结合的造纸智慧"
+                        }
+                    },
+                    "工艺创新": {
+                        description: "在传统造纸工艺基础上进行创新，拓展传统技艺应用场景。",
+                        details: "基础纸制作是在传统造纸工艺基础上制作满足现代需求的古法纸张。花草纸制作是将花草元素融入纸张制作，使传统纸张具有更多艺术表现形式。文创产品开发是将古法纸应用于现代文化创意产品，拓展传统技艺应用场景。",
+                        children: {
+                            "基础纸制作": "在传统造纸工艺基础上制作满足现代需求的古法纸张",
+                            "花草纸制作": "将花草元素融入纸张制作，使传统纸张具有更多艺术表现形式",
+                            "文创产品开发": "将古法纸应用于现代文化创意产品，拓展传统技艺应用场景"
+                        }
+                    },
+                    "传承现状与发展困境": {
+                        description: "掌握完整古法造纸技艺的匠人数量有限，面临生产成本较高、市场需求变化等问题。",
+                        details: "掌握完整古法造纸技艺的匠人数量有限，仅1名市级传承人、1名县级申报人。古法造纸制作周期较长，人工成本较高。现代工业纸品普及，对传统纸张市场造成影响。需要通过创新方式吸引年轻人参与非遗传承。无法大规模工厂化量产，仅小型手工作坊运营。",
+                        children: {
+                            "传承人员不足": "掌握完整古法造纸技艺的匠人数量有限，仅1名市级传承人、1名县级申报人",
+                            "生产成本较高": "古法造纸制作周期较长，人工成本较高",
+                            "市场需求变化": "现代工业纸品普及，对传统纸张市场造成影响",
+                            "年轻群体参与不足": "需要通过创新方式吸引年轻人参与非遗传承",
+                            "行业规模限制": "无法大规模工厂化量产，仅小型手工作坊运营"
+                        }
+                    },
+                    "产业经营模式": {
+                        description: "通过产品销售、研学体验、文创开发和文旅融合四种方式实现产业经营。",
+                        details: "产品销售是通过销售古法纸张获得经济收益。研学体验是开展造纸体验课程，将技艺展示转化为文化体验项目。文创开发是开发具有古法造纸特色的文化产品。文旅融合是结合乡村旅游，提高古法造纸文化传播范围。",
+                        children: {
+                            "产品销售": "通过销售古法纸张获得经济收益",
+                            "研学体验": "开展造纸体验课程，将技艺展示转化为文化体验项目",
+                            "文创开发": "开发具有古法造纸特色的文化产品",
+                            "文旅融合": "结合乡村旅游，提高古法造纸文化传播范围"
+                        }
+                    },
+                    "活态传承发展": {
+                        description: "通过非遗研学、展览展示和跨界融合实现古法造纸文化创新发展。",
+                        details: "非遗研学通过研学课程让更多人了解和体验古法造纸技艺。展览展示通过展览、文化活动展示传统造纸文化。跨界融合与文创、旅游、教育等领域结合，实现古法造纸文化创新发展。",
+                        children: {
+                            "非遗研学": "通过研学课程让更多人了解和体验古法造纸技艺",
+                            "展览展示": "通过展览、文化活动展示传统造纸文化",
+                            "跨界融合": "与文创、旅游、教育等领域结合，实现古法造纸文化创新发展"
+                        }
+                    }
+                }
+            }
+        };
+
+        const nodesData = [];
+        const linksData = [];
+        const idToNodeMap = {};
+        let nextNodeId = 0;
+
+        const levelConfigs = [
+            { level: 1, symbolSize: 50, color: '#667eea' },
+            { level: 2, symbolSize: 35, color: '#764ba2' },
+            { level: 3, symbolSize: 25, color: '#f97316' },
+            { level: 4, symbolSize: 20, color: '#10b981' }
+        ];
+
+        function createNode(name, level, parentId, description, details, children) {
+            const nodeId = nextNodeId++;
+            const config = levelConfigs[level - 1] || levelConfigs[levelConfigs.length - 1];
+            
+            const node = {
+                nodeId: nodeId,
+                id: nodeId,
+                name: name,
+                level: level,
+                parentId: parentId,
+                childrenIds: [],
+                symbolSize: config.symbolSize,
+                itemStyle: { color: config.color },
+                data: {
+                    description: description || '',
+                    details: details || '',
+                    children: children || {}
+                }
+            };
+            
+            nodesData.push(node);
+            idToNodeMap[nodeId] = node;
+            
+            return nodeId;
+        }
+
+        function parseChildren(parentNodeId, parentLevel, childrenData) {
+            if (!childrenData || typeof childrenData !== 'object') {
+                return [];
+            }
+            
+            const childrenIds = [];
+            const childNames = Object.keys(childrenData);
+            
+            childNames.forEach(childName => {
+                const childData = childrenData[childName];
+                const childLevel = parentLevel + 1;
+                
+                let description = '';
+                let details = '';
+                let grandchildren = {};
+                
+                if (typeof childData === 'string') {
+                    description = childData;
+                } else if (typeof childData === 'object') {
+                    description = childData.description || '';
+                    details = childData.details || '';
+                    grandchildren = childData.children || {};
+                }
+                
+                const childId = createNode(childName, childLevel, parentNodeId, description, details, grandchildren);
+                childrenIds.push(childId);
+                linksData.push({ source: parentNodeId, target: childId });
+                
+                if (grandchildren && Object.keys(grandchildren).length > 0) {
+                    const grandchildIds = parseChildren(childId, childLevel, grandchildren);
+                    const childNode = idToNodeMap[childId];
+                    if (childNode) {
+                        childNode.childrenIds = grandchildIds;
+                    }
+                }
+            });
+            
+            return childrenIds;
+        }
+
+        const rootId = createNode("松阳非遗文化", 1, null, "松阳县非物质文化遗产涵盖茶叶、太平体系、竹编、古法造纸等多个领域，承载着丰富的地域文化记忆和传统技艺传承。", "", knowledgeData);
+        
+        if (knowledgeData) {
+            const childrenIds = parseChildren(rootId, 1, knowledgeData);
+            const rootNode = idToNodeMap[rootId];
+            if (rootNode) {
+                rootNode.childrenIds = childrenIds;
+            }
+        }
+
+        const chart = echarts.init(document.getElementById('chart'));
+        const option = {
+            title: {
+                text: '松阳非遗文化知识图谱',
+                left: 'center',
+                top: 10,
+                textStyle: { color: '#333', fontSize: window.innerWidth < 768 ? 14 : 18, fontWeight: 'bold' }
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: function(params) {
+                    if (params.data) {
+                        return params.data.name;
+                    }
+                    return params.name;
+                }
+            },
+            series: [{
+                type: 'graph',
+                layout: 'force',
+                force: {
+                    repulsion: 80,
+                    gravity: 0.03,
+                    edgeLength: 120,
+                    layoutAnimation: true
+                },
+                data: nodesData,
+                links: linksData,
+                roam: true,
+                label: {
+                    show: true,
+                    formatter: function(params) {
+                        return params.data.name;
+                    },
+                    fontSize: window.innerWidth < 768 ? 9 : 11,
+                    fontWeight: 'bold'
+                },
+                lineStyle: {
+                    color: '#ccc',
+                    width: 1,
+                    opacity: 0.6
+                },
+                itemStyle: {
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                    shadowBlur: 8,
+                    shadowColor: 'rgba(0,0,0,0.15)'
+                },
+                emphasis: {
+                    label: { show: true },
+                    itemStyle: {
+                        borderWidth: 3,
+                        shadowBlur: 12
+                    }
+                }
+            }]
+        };
+
+        chart.setOption(option);
+
+        let currentNodeId = null;
+
+        chart.on('click', function(params) {
+            if (params.data) {
+                const node = params.data;
+                currentNodeId = node.nodeId;
+                displayInfo(node);
+            }
+        });
+
+        function generateChildrenButtons(node) {
+            const childrenIds = node.childrenIds || [];
+            if (childrenIds.length === 0) {
+                return '<div style="color: #999; font-size: 12px;">暂无子节点</div>';
+            }
+            return childrenIds.map((childId, idx) => {
+                const childNode = idToNodeMap[childId];
+                if (!childNode) {
+                    return '';
+                }
+                return `<div class="sub-node-item" onclick="jumpToNode(${childNode.nodeId}, event)">${idx + 1}. ${childNode.name} →</div>`;
+            }).join('');
+        }
+
+        function displayInfo(node) {
+            const infoPanel = document.getElementById('info-panel');
+            const backBtn = document.getElementById('back-btn');
+            
+            currentNodeId = node.nodeId;
+            
+            if (node.parentId === null) {
+                backBtn.classList.add('hidden');
+            } else {
+                backBtn.classList.remove('hidden');
+            }
+
+            let html = '';
+
+            if (node.level === 1) {
+                html = `
+                    <div class="card">
+                        <div class="card-title">📍 ${node.name}</div>
+                        <div class="card-content">${node.data.description}</div>
+                        <div class="sub-nodes">
+                            <strong>📚 下属部分：</strong>
+                            ${generateChildrenButtons(node)}
+                        </div>
+                    </div>
+                `;
+            } else if (node.level === 2) {
+                html = `
+                    <div class="card">
+                        <div class="card-title">📘 ${node.name}</div>
+                        <div class="card-content">${node.data.description}</div>
+                        <div class="details">
+                            <strong style="color: #667eea; font-size: 12px;">📄 详细信息：</strong>
+                            <div class="detail-text">${node.data.details || ''}</div>
+                        </div>
+                        <div class="sub-nodes">
+                            <strong>🔍 子项目：</strong>
+                            ${generateChildrenButtons(node)}
+                        </div>
+                    </div>
+                `;
+            } else if (node.level === 3) {
+                html = `
+                    <div class="card">
+                        <div class="card-title">📄 ${node.name}</div>
+                        <div class="details">
+                            <div class="detail-text">${node.data.description}</div>
+                            ${node.data.details ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e0e0e0;"><strong style="color: #667eea; font-size: 12px;">📝 详细信息：</strong><div class="detail-text">${node.data.details}</div></div>` : ''}
+                        </div>
+                        <div class="sub-nodes">
+                            <strong>🔍 子项目：</strong>
+                            ${generateChildrenButtons(node)}
+                        </div>
+                    </div>
+                `;
+            } else if (node.level === 4) {
+                html = `
+                    <div class="card">
+                        <div class="card-title">📝 ${node.name}</div>
+                        <div class="details">
+                            <div class="detail-text">${node.data.description}</div>
+                            ${node.data.details ? `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e0e0e0;"><strong style="color: #667eea; font-size: 12px;">📝 详细信息：</strong><div class="detail-text">${node.data.details}</div></div>` : ''}
+                        </div>
+                        <div class="sub-nodes">
+                            <strong>🔍 子项目：</strong>
+                            ${generateChildrenButtons(node)}
+                        </div>
+                    </div>
+                `;
+            }
+
+            infoPanel.innerHTML = html;
+        }
+
+        window.jumpToNode = function(nodeId, event) {
+            event.stopPropagation();
+            const node = idToNodeMap[nodeId];
+            if (node) {
+                currentNodeId = nodeId;
+                displayInfo(node);
+            }
+        };
+
+        window.goBack = function() {
+            if (currentNodeId !== null) {
+                const currentNode = idToNodeMap[currentNodeId];
+                if (currentNode && currentNode.parentId !== null) {
+                    const parentNode = idToNodeMap[currentNode.parentId];
+                    if (parentNode) {
+                        displayInfo(parentNode);
+                    }
+                }
+            }
+        };
+
+        window.addEventListener('resize', () => {
+            chart.resize();
+        });
+    </script>
+</body>
+</html>
